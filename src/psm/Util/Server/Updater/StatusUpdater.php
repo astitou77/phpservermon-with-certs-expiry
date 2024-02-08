@@ -43,6 +43,11 @@ class StatusUpdater
 
     public $curl_info = '';
 
+    public $ctime = null;   // ADNANE ADDED
+    public $c_expired = 'no'; // 0days left - RED
+    public $c_week_expiring = 'no'; // 7days left - ORANGE
+    public $c_almost_expired = 'no'; // 90days left - YELLOW
+
     public $rtime = 0;
 
     public $status_new = false;
@@ -89,7 +94,11 @@ class StatusUpdater
         $this->error = '';
         $this->header = '';
         $this->curl_info = '';
-        $this->rtime = 0;
+        $this->ctime = null;     // ADNANE ADDED
+    	$this->c_expired = 'no'; // 0days left - RED
+    	$this->c_week_expiring = 'no'; // 7days left - ORANGE
+    	$this->c_almost_expired = 'no'; // 90days left - YELLOW
+	$this->rtime = 0;
 
         // get server info from db
         $this->server = $this->db->selectRow(PSM_DB_PREFIX . 'servers', array(
@@ -100,7 +109,8 @@ class StatusUpdater
             'allow_http_status', 'redirect_check', 'header_name',
             'header_value', 'status', 'active', 'warning_threshold',
             'warning_threshold_counter', 'ssl_cert_expiry_days', 'ssl_cert_expired_time', 'timeout', 'website_username',
-            'website_password', 'last_offline'
+            'ctime','c_expired', 'c_week_expiring', 'c_almost_expired',
+	    'website_password', 'last_offline'
         ));
         if (empty($this->server)) {
             return false;
@@ -118,10 +128,45 @@ class StatusUpdater
                 break;
         }
 
+
+// ADNANE ADDED
+$this->ctime = NULL;
+$href = $this->server['ip'];
+$rez = psm_curl_get($href);        <———  /src/includes/functions.inc.php
+$ExpiryDate = $rez['info']['certinfo']['0']['Expire date'];
+
+$now_date = date("Y-m-d H:i:s", strtotime("+2 week"));
+$one_week_date = date("Y-m-d H:i:s", strtotime("+11 months"));
+$three_month_date = date("Y-m-d H:i:s", strtotime("+12 months"));
+
+if($ExpiryDate !== NULL) {
+    $this->ctime = date("Y-m-d H:i:s", strtotime($ExpiryDate));
+
+    if($this->ctime < $now_date){
+        $this->c_expired = 'yes';
+    }elseif($this->ctime < $one_week_date){
+        $this->c_week_expiring = 'yes';
+    }elseif($this->ctime < $three_month_date){
+        $this->c_almost_expired = 'yes';
+    }
+}
+
+/*
+file_put_contents("/Users/adnane/Desktop/httpd-2.4.58-appmonitor/htdocs/phpservermon/Adnane-UPPPPPP111.txt",
+    "ONE: " . print_r($this->server, true) . PHP_EOL
+    . " TWO: " . print_r($rez, true) . PHP_EOL
+    . " THREE: " . $ExpiryDate . PHP_EOL
+    , FILE_APPEND);
+*/
+
         // update server status
         $save = array(
             'last_check' => date('Y-m-d H:i:s'),
             'error' => $this->error,
+    	    'ctime' => $this->ctime,   // "2030-01-01" ADNANE ADDED - functions.inc.php -  $this->server['ip']
+    	    'c_expired' => $this->c_expired,
+    	    'c_week_expiring' => $this->c_week_expiring,
+    	    'c_almost_expired' => $this->c_almost_expired,
             'rtime' => $this->rtime
         );
         if (!empty($this->error)) {

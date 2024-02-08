@@ -60,6 +60,7 @@
 						<th scope="col">#</th>
 						<th scope="col">{{ label_last_online }}</th>
 						<th scope="col">{{ label_last_check }}</th>
+						<th scope="col">{{ label_ctime }}</th>
 						<th scope="col">{{ label_rtime }}</th>
 					</tr>
 				</thead>
@@ -70,6 +71,7 @@
 							<td>{{ server.last_online_nice }}</td>
 							<td>{{ server.last_checked_nice }}</td>
 							<td></td>
+							<td></td>
 						</tr>
 					{% endfor %}
 					{% for server in servers_warning %}
@@ -77,6 +79,7 @@
 							<th class="full"><a href="{{ server.url_view|raw }}" class="text-white">{{ server.label }}<span class="sr-only"> ({{ label_warning }})</span></a></th>
 							<td>{{ server.last_online_nice }}</td>
 							<td>{{ server.last_checked_nice }}</td>
+							<td>{{ server.ctime }}</td>
 							<td></td>
 						</tr>
 					{% endfor %}
@@ -88,6 +91,7 @@
 						<th scope="col">#</th>
 						<th scope="col">{{ label_last_online }}</th>
 						<th scope="col">{{ label_last_offline }}</th>
+						<th scope="col">{{ label_ctime }}</th>
 						<th scope="col">{{ label_rtime }}</th>
 					</tr>
 				</thead>
@@ -97,6 +101,17 @@
 							<th class="full"><a href="{{ server.url_view|raw }}" class="text-white">{{ server.label }}<span class="sr-only"> ({{ label_online }})</span></a></th>
 							<td>{{ server.last_online_nice }}</td>
 							<td>{{ server.last_offline_nice }} {{ server.last_offline_duration_nice }}</td>
+							
+                                        {% if server.c_expired == 'yes' %}
+                                                <td style="background-color: #a00000; color: #f7cece;">{{ server.ctime }}</td> <!-- ADNANE ADDED --> 
+                                        {% elseif server.c_week_expiring == 'yes' %}
+                                                <td style="background-color: #ff8c00; color: black;">{{ server.ctime }}</td> <!-- ADNANE ADDED --> 
+                                        {% elseif server.c_almost_expired == 'yes' %}
+                                                <td style="background-color: #ffff00; color: black;">{{ server.ctime }}</td> <!-- ADNANE ADDED --> 
+                                        {% else %}
+                                                <td>{{ server.ctime }}</td>
+                                        {% endif %}
+
 							<td>{{ (server.rtime * 1000)|round(2) }} ms</td>
 						</tr>
 					{% endfor %}
